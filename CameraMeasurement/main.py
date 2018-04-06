@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+
+# Tamanho quadrados real: 27.5 mm
 import numpy as np
 import cv2
 import math
