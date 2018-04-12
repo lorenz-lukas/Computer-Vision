@@ -3,6 +3,7 @@
 import numpy as np
 import cv2 as cv
 import glob
+import xml.etree.cElementTree as ET
 
 num_img = 0
 key = 0
@@ -41,14 +42,9 @@ if(num_img > 0):
     print num_img,"\n"
     print "Wait a second..."
     ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None, flags=cv.CALIB_USE_INTRINSIC_GUESS)
-    print ret, mtx, dist, rvecs, tvecs
-    h, w = pic.shape[:2]
-    newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
-    print "um"
 
-    # ERRO libpng warning: Image width is zero in IHDR
-    #libpng warning: Image height is zero in IHDR
-    #libpng error: Invalid IHDR data
+    h1, w1 = img.shape[:2]
+    newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w1,h1), 1, (w1,h1))
 
     # undistort
     dst = cv.undistort(img, mtx, dist, None, newcameramtx)
@@ -56,7 +52,7 @@ if(num_img > 0):
     x, y, w, h = roi
     dst = dst[y:y+h, x:x+w]
     cv.imwrite('calibresult.png', dst)
-    print "dois"
+
     # undistort
     mapx, mapy = cv.initUndistortRectifyMap(mtx, dist, None, newcameramtx, (w,h), 5)
     dst = cv.remap(img, mapx, mapy, cv.INTER_LINEAR)
@@ -64,7 +60,8 @@ if(num_img > 0):
     x, y, w, h = roi
     dst = dst[y:y+h, x:x+w]
     cv.imwrite('calibresult2.png', dst)
-    print "tres"
+
+    print '\n','Errors:','\n'
     mean_error = 0
     for i in xrange(len(objpoints)):
         imgpoints2, _ = cv.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
@@ -72,7 +69,6 @@ if(num_img > 0):
         mean_error += error
         print( "total error: {}".format(mean_error/len(objpoints)) )
 
-#import xml.etree.cElementTree as ET
 
 #root = ET.Element("root")
 #doc = ET.SubElement(root, "doc")

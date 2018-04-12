@@ -1,0 +1,6 @@
+<root><doc><field1 name="Status">95.3966387234</field1><field2 name="Original calibration matrix">[[  1.00000000e+00   0.00000000e+00  -4.80144877e-26]
+ [  0.00000000e+00   1.00000000e+00  -1.83664433e-26]
+ [  0.00000000e+00   0.00000000e+00   1.00000000e+00]]</field2><field3 name="Optimazed calibration matrix">[[  1.03008401e+00   0.00000000e+00  -4.94589559e-26]
+ [  0.00000000e+00   9.99611557e-01  -1.83593086e-26]
+ [  0.00000000e+00   0.00000000e+00   1.00000000e+00]]</field3><field4 name="Distortion matrix">[[ -2.79406661e-18  -3.17047481e-13  -7.25212156e-21  -2.20374875e-20
+    1.34332040e-18]]</field4><field5 name="Radial distortion matrix">radial_distortion</field5><field6 name="Tangencial distortian matrix">tangencial_distortion</field6><field7 name="Region of Interest">roi</field7></doc></root>
