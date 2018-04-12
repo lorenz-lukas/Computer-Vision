@@ -4,8 +4,7 @@ import numpy as np
 import cv2
 import math
 import sys
-import xml.etree.cElementTree as ET
-from lxml import etree
+import xml.etree.ElementTree as etree
 import json
 video = cv2.VideoCapture(0)
 (ret, pic) = video.read()
@@ -62,7 +61,7 @@ def calibration(i): #repeat 5 times
 	criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 	# do not forget to change chess dimensions
 	objp, objpoints,imgpoints = obj_parameters()
-	video = cv2.VideoCapture(0) # takes the video adress
+	video = cv2.VideoCapture(0)
 	cv2.namedWindow('Raw')
 	cv2.setMouseCallback('Raw',coordinates)
 	print('Press ESC to stop the calibration\n\n\n')
@@ -174,8 +173,12 @@ def load_xml_camera_paremeters():
 	#				tmp['_id'] = bson.objectid.ObjectId(tmp['_id'])
 	#				out.append(tmp)
 	doc = etree.parse('camera_parameters_0.xml')
+	tree = etree.parse('camera_parameters_0.xml')
+	root = tree.getroot()
+	Camera = root.attrib
 	print doc
 	return Camera['Region of Interest'], Camera
+
 def main():
 	draw_line()
 	key = raw_input("\nPress 'C' or 'c' if you want to calibrate the camera: \nOtherwise the camera parameters will be loaded.\n\n")
