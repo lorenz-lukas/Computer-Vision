@@ -99,7 +99,7 @@ def calibration(i): #repeat 5 times
 		h, w = img.shape[:2]
 		newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
 		## Python dictionary data structure:
-		Camera = {"Original Matrix" : mtx, "Distortion" : dist, "Radial Distortion":rvecs, "Tangencial Distortion": tvecs, "Improved Matrix": newcameramtx, "Region of Interest": roi}
+		Camera = {"Status": status,"Original Matrix" : mtx, "Distortion" : dist, "Radial Distortion":rvecs, "Tangencial Distortion": tvecs, "Improved Matrix": newcameramtx, "Region of Interest": roi}
 		save_xml(ret,mtx,dist,rvecs,tvecs,newcameramtx,roi,i)
 		errors(objpoints,imgpoints,Camera)
 		return img, Camera
@@ -145,9 +145,11 @@ def load_xml_camera_paremeters():
 	root = tree.getroot()
 	for elem in root:
 		for subelem in elem:
-			print(subelem.text)
-			ch.append((np.array(subelem.text)).astype(np.float))
-	print ch[-1]
+			print subelem.text
+			ch.append(subelem.text)
+	#np.array(ch).astype(np.float)
+	print ch[0]
+	#Camera = {"Status": ch[0],"Original Matrix" : ch[1], "Distortion" : dist, "Radial Distortion":rvecs, "Tangencial Distortion": tvecs, "Improved Matrix": newcameramtx, "Region of Interest": roi}
 	#return Camera['Region of Interest'], Camera
 
 def obj_measurement(Camera):
