@@ -1,0 +1,11 @@
+<CameraData>
+  <CameraMatrix>
+    <Triada a="1.0" c="-5.76500687536e-26" b="0.0"/>
+    <Triada a="0.0" c="-3.32874922668e-26" b="1.0"/>
+    <Triada a="0.0" c="1.0" b="0.0"/>
+  </CameraMatrix>
+  <DistCoef>
+    <Coef>[ -3.70405567e-18  -4.31710446e-13  -1.44346629e-20  -2.63263568e-20
+   1.65234329e-18]</Coef>
+  </DistCoef>
+</CameraData>

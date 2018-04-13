@@ -4,6 +4,8 @@ import numpy as np
 import cv2
 import math
 import sys
+from lxml import etree
+from lxml.builder import E
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 from xml.dom import minidom
@@ -120,26 +122,33 @@ def errors(objpoints,imgpoints,Camera):
 		print( "total error: {}".format(mean_error/len(objpoints)) )
 
 def save_xml(status, mtx,distortion,radial_distortion,tangencial_distortion,mtx_optimized,roi,i):
-	name = "parameters{}.xml".format(i)
-	data = ET.Element('Camera Parameters')
-	items = ET.SubElement(data, 'Data')
-	item1 = ET.SubElement(items, 'Status')
-	item2 = ET.SubElement(items, 'Original Matrix')
-	item3 = ET.SubElement(items, 'Optimized Matrix')
-	item4 = ET.SubElement(items, 'Distortion')
-	item5 = ET.SubElement(items, 'Radial Distortion')
-	item6 = ET.SubElement(items, 'Tangencial Distortion')
-	item7 = ET.SubElement(items, 'Region of Interest')
-	item1.text = str(status)
-	item2.text = str(mtx)
-	item3.text = str(mtx_optimized)
-	item4.text = str(distortion)
-	item5.text = str(radial_distortion)
-	item6.text = str(tangencial_distortion)
-	item7.text = str(roi)
-	mydata = ET.tostring(data, pretty_print=True)
-	myfile = open(name, "w")
-	myfile.write(mydata)
+	#camera_matrix_xml = E.CameraMatrix(*map(triada, mtx))
+	Status = E.Status(str(status))
+	Original_Matrix = E.Original_Matrix(*map(E.Coef, map(str, mtx)))
+	Optimized_Matrix = E.Optimized_Matrix(*map(E.Coef, map(str, mtx_optimized)))
+	Distortion = E.Distortion(*map(E.Coef, map(str, distortion)))
+	Radial_Distortion = E.Radial_Distortion(*map(E.Coef, map(str, radial_distortion)))
+	Tangencial_Distortion = E.Tangencial_Distortion(*map(E.Coef, map(str, tangencial_distortion)))
+	ROI = E.ROI(*map(E.Coef, map(str, roi)))
+	xmldoc = E.CameraData(Status, Original_Matrix,Optimized_Matrix,Distortion,Radial_Distortion,Tangencial_Distortion,ROI)
+	fname = "parameters{}.xml".format(i)
+	with open(fname, "w") as f:
+		f.write(etree.tostring(xmldoc, pretty_print=True))
+
+def triada(itm):
+	a, b, c = itm
+	return E.Triada(a = str(a), b = str(b), c = str(c))
+
+def load_xml_camera_paremeters():
+	ch = []
+	tree = ET.parse('parameters1.xml')
+	root = tree.getroot()
+	for elem in root:
+		for subelem in elem:
+			print(subelem.text)
+			ch.append((np.array(subelem.text)).astype(np.float))
+	print ch[-1]
+	#return Camera['Region of Interest'], Camera
 
 def obj_measurement(Camera):
 	global pic
@@ -174,16 +183,6 @@ def obj_measurement(Camera):
 		key = cv2.waitKey(20)
 	video.release()
 	cv2.destroyAllWindows()
-
-def load_xml_camera_paremeters():
-	ch = []
-	tree = ET.parse('parameters0.xml')
-	root = tree.getroot()
-	for elem in root:
-		for subelem in elem:
-			print(subelem.text)
-			ch.append(float(subelem.text))
-	return Camera['Region of Interest'], Camera
 
 def data_analysis(data):
 	pass
