@@ -4,9 +4,12 @@ import numpy as np
 import cv2
 import math
 import sys
-import xml.etree.ElementTree as etree
-import json
-video = cv2.VideoCapture(0)
+import xml.etree.ElementTree as ET
+import xml.dom.minidom
+from xml.dom import minidom
+import sys
+
+video = cv2.VideoCapture(-1)
 (ret, pic) = video.read()
 np.seterr(over='ignore')
 px = []
@@ -83,6 +86,9 @@ def calibration(i): #repeat 5 times
 		key = cv2.waitKey(20)
 	video.release()
 	cv2.destroyAllWindows()
+	#### PARTE 3
+	# Find the rotation and translation vectors.
+		#ret,rvecs, tvecs = cv.solvePnP(objp, corners2, mtx, dist)
 	if(num_img > 0):
 		print num_img,"\n"
 		print "Wait a second..."
@@ -114,23 +120,26 @@ def errors(objpoints,imgpoints,Camera):
 		print( "total error: {}".format(mean_error/len(objpoints)) )
 
 def save_xml(status, mtx,distortion,radial_distortion,tangencial_distortion,mtx_optimized,roi,i):
-	name = "camera_parameters_{}.xml".format(i)
-	root = ET.Element("Camera Parameters")
-	doc = ET.SubElement(root, "doc")
-
-	ET.SubElement(doc, "field1", name="Status").text = str(status)
-	ET.SubElement(doc, "field2", name="Original calibration matrix").text = str(mtx)
-	ET.SubElement(doc, "field3", name="Optimazed calibration matrix").text = str(mtx_optimized)
-	ET.SubElement(doc, "field4", name="Distortion matrix").text = str(distortion)
-	ET.SubElement(doc, "field5", name="Radial distortion matrix").text = str(radial_distortion)
-	ET.SubElement(doc, "field6", name="Tangencial distortian matrix").text = str(tangencial_distortion)
-	ET.SubElement(doc, "field7", name="Region of Interest").text = str(roi)
-
-	tree = ET.ElementTree(root)
-	tree.write(name)
-	#strDB = json.dumps(toWriteObj)
-	#fDB.write(strDB)
-	#fDB.close()
+	name = "parameters{}.xml".format(i)
+	data = ET.Element('Camera Parameters')
+	items = ET.SubElement(data, 'Data')
+	item1 = ET.SubElement(items, 'Status')
+	item2 = ET.SubElement(items, 'Original Matrix')
+	item3 = ET.SubElement(items, 'Optimized Matrix')
+	item4 = ET.SubElement(items, 'Distortion')
+	item5 = ET.SubElement(items, 'Radial Distortion')
+	item6 = ET.SubElement(items, 'Tangencial Distortion')
+	item7 = ET.SubElement(items, 'Region of Interest')
+	item1.text = str(status)
+	item2.text = str(mtx)
+	item3.text = str(mtx_optimized)
+	item4.text = str(distortion)
+	item5.text = str(radial_distortion)
+	item6.text = str(tangencial_distortion)
+	item7.text = str(roi)
+	mydata = ET.tostring(data, pretty_print=True)
+	myfile = open(name, "w")
+	myfile.write(mydata)
 
 def obj_measurement(Camera):
 	global pic
@@ -167,25 +176,27 @@ def obj_measurement(Camera):
 	cv2.destroyAllWindows()
 
 def load_xml_camera_paremeters():
-	#Camera = json.loads(strDB)
-	#for i in tmpDB:
-	#				tmp = i
-	#				tmp['_id'] = bson.objectid.ObjectId(tmp['_id'])
-	#				out.append(tmp)
-	doc = etree.parse('camera_parameters_0.xml')
-	tree = etree.parse('camera_parameters_0.xml')
+	ch = []
+	tree = ET.parse('parameters0.xml')
 	root = tree.getroot()
-	Camera = root.attrib
-	print doc
+	for elem in root:
+		for subelem in elem:
+			print(subelem.text)
+			ch.append(float(subelem.text))
 	return Camera['Region of Interest'], Camera
 
+def data_analysis(data):
+	pass
 def main():
 	draw_line()
 	key = raw_input("\nPress 'C' or 'c' if you want to calibrate the camera: \nOtherwise the camera parameters will be loaded.\n\n")
 	if(key == 'C' or key == 'c'):
+		data = []
 		for i in xrange(5):
 			print('Click on the image Box. \n')
 			(img,Camera) = calibration(i)
+			data.append(Camera)
+		data_analysis(data)
 	else:
 		(img,Camera) = load_xml_camera_paremeters()
 	obj_measurement(Camera)
