@@ -77,11 +77,11 @@ def calibration(i): #repeat 5 times
 		cv2.imshow('Raw', pic)
 		key = cv2.waitKey(20)
 	video.release()
-	cv2.destroyAllWindows()	
+	cv2.destroyAllWindows()
 	if(num_img > 0):
 		print "Wait a second..."
 		ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None, flags=cv2.CALIB_USE_INTRINSIC_GUESS)
-		# mtx = K matrix (Intrinsic Parameters), rvecs = R and tvecs = t (External Parameters)		
+		# mtx = K matrix (Intrinsic Parameters), rvecs = R and tvecs = t (External Parameters)
 		h, w = img.shape[:2]
 		newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
 		## Python dictionary data structure:
@@ -90,13 +90,20 @@ def calibration(i): #repeat 5 times
 		#errors(objpoints,imgpoints,Camera)
 		Intrinsics(Camera,objp,corners2,Camera['Original Matrix'],Camera['Distortion'])
 		return img, Camera
-def Intrinsics(Camera,objp,corners2,mtx,dist):	
+def Intrinsics(Camera,objp,corners2,mtx,dist):
 	#### PARTE 3
-	ret,rvecs, tvecs = cv.solvePnP(objp, corners2, mtx, dist)
-	print "Computed by: calibrateCamera				solvePnp\n"			
-	print "Ret:\n", Camera['Ret'], ret
-	print "Radial Distortion:\n", Camera['Radial Distortion'], rvecs
-	print "Tangencial Distortion:\n", Camera['Tangencial Distortion'], tvecs
+	rvecsRansac, tvecsRansac, inliers = cv2.solvePnPRansac(objp, corners2, mtx, dist)
+	ret,rvecs, tvecs = cv2.solvePnP(objp, corners2, mtx, dist)
+	print "Computed by: calibrateCamera, solvePnp and solvePnPRansac\n"
+	print "Ret:\n", Camera['Ret'],
+	print "Ret:\n", ret
+	print "Ret:\n", inliers
+	print "Radial Distortion:\n", Camera['Radial Distortion']
+	print "Radial Distortion:\n", rvecs
+	print "Radial Distortion:\n", rvecsRansac
+	print "Tangencial Distortion:\n", Camera['Tangencial Distortion']
+	print "Tangencial Distortion:\n", tvecs
+	print "Tangencial Distortion:\n", tvecsRansac
 
 def obj_parameters():
 	objp = np.zeros((8*6,3), np.float32)
@@ -122,7 +129,7 @@ def save_xml(ret, mtx,distortion,radial_distortion,tangencial_distortion,mtx_opt
 	fs_write.write("Optimized_Matrix",mtx_optimized)
 	fs_write.write("Distortion",distortion)
 	fs_write.write("Radial_Distortion",np.array(radial_distortion))
-	fs_write.write("Tangencial_Distortion",np.array(tangencial_distortion))	
+	fs_write.write("Tangencial_Distortion",np.array(tangencial_distortion))
 	fs_write.write("ROI", roi)
 	fs_write.release()
 
@@ -174,14 +181,14 @@ def mean(c1,c2,c3,c4,c5):
 	tangencial_distortion_mean = (np.array(c1['Tangencial Distortion'])+np.array(c2['Tangencial Distortion'])+np.array(c3['Tangencial Distortion'])+np.array(c4['Tangencial Distortion'])+np.array(c5['Tangencial Distortion']))/5
 	radial_distortion_mean = (np.array(c1['Radial Distortion'])+np.array(c2['Radial Distortion'])+np.array(c3['Radial Distortion'])+np.array(c4['Radial Distortion'])+np.array(c5['Radial Distortion']))/5
 	roi_mean = (np.array(c1['Region of Interest'])+np.array(c2['Region of Interest'])+np.array(c3['Region of Interest'])+np.array(c4['Region of Interest'])+np.array(c5['Region of Interest']))/5
-	
+
 	fs_write = cv2.FileStorage("CameraParameters.xml", cv2.FILE_STORAGE_WRITE)
 	fs_write.write("Ret", ret_mean)
 	fs_write.write("Original_Matrix",mtx_mean)
 	fs_write.write("Optimized_Matrix",optimized_mtx_mean)
 	fs_write.write("Distortion",distortion_mean)
 	fs_write.write("Radial_Distortion",radial_distortion_mean)
-	fs_write.write("Tangencial_Distortion",tangencial_distortion_mean)	
+	fs_write.write("Tangencial_Distortion",tangencial_distortion_mean)
 	fs_write.write("ROI", roi_mean)
 	fs_write.release()
 
