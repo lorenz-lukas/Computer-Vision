@@ -4,13 +4,6 @@ import numpy as np
 import cv2
 import math
 import sys
-from lxml import etree
-from lxml.builder import E
-import xml.etree.ElementTree as ET
-import xml.dom.minidom
-from xml.dom import minidom
-import sys
-
 video = cv2.VideoCapture(-1)
 (ret, pic) = video.read()
 np.seterr(over='ignore')
@@ -69,40 +62,41 @@ def calibration(i): #repeat 5 times
 	video = cv2.VideoCapture(0)
 	cv2.namedWindow('Raw')
 	cv2.setMouseCallback('Raw',coordinates)
-	print('Press ESC to stop the calibration\n\n\n')
-	print 'Press "r" to record after the detection marker apears.\n','OBS: Please rec at least 15 times.'
-	while(key!=27):
+	while(num_img < 20):
 		(ret, img) = video.read()
 		pic = cv2.flip(img,1)
 		gray = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)
 		ret, corners = cv2.findChessboardCorners(gray, (8,6), None)#(8,6) Obj square points
 		distance = px_distance(distance,pic)
 		if ret == True:
-			if(cv2.waitKey(20) == 114):
-				objpoints.append(objp) # Square coordinates, 0 to 48 in (6,8) matrix
-				imgpoints.append(corners) # Pixel values according to objpoints
-				num_img += 1
+			objpoints.append(objp) # Square coordinates, 0 to 48 in (6,8) matrix
+			imgpoints.append(corners) # Pixel values according to objpoints
+			num_img += 1
 			corners2 = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
 			cv2.drawChessboardCorners(pic, (8,6), corners2, ret)
 		cv2.imshow('Raw', pic)
 		key = cv2.waitKey(20)
 	video.release()
-	cv2.destroyAllWindows()
-	#### PARTE 3
-	# Find the rotation and translation vectors.
-		#ret,rvecs, tvecs = cv.solvePnP(objp, corners2, mtx, dist)
+	cv2.destroyAllWindows()	
 	if(num_img > 0):
-		print num_img,"\n"
 		print "Wait a second..."
 		ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None, flags=cv2.CALIB_USE_INTRINSIC_GUESS)
-		# mtx = K matrix (Intrinsic Parameters), rvecs = R and tvecs = t (External Parameters)
+		# mtx = K matrix (Intrinsic Parameters), rvecs = R and tvecs = t (External Parameters)		
 		h, w = img.shape[:2]
 		newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
 		## Python dictionary data structure:
-		Camera = {"Status": status,"Original Matrix" : mtx, "Distortion" : dist, "Radial Distortion":rvecs, "Tangencial Distortion": tvecs, "Improved Matrix": newcameramtx, "Region of Interest": roi}
+		Camera = {"Ret": ret,"Original Matrix" : mtx, "Distortion" : dist, "Radial Distortion":rvecs, "Tangencial Distortion": tvecs, "Improved Matrix": newcameramtx, "Region of Interest": roi}
 		save_xml(ret,mtx,dist,rvecs,tvecs,newcameramtx,roi,i)
-		errors(objpoints,imgpoints,Camera)
+		#errors(objpoints,imgpoints,Camera)
+		Intrinsics(Camera,objp,corners2,Camera['Original Matrix'],Camera['Distortion'])
 		return img, Camera
+def Intrinsics(Camera,objp,corners2,mtx,dist):	
+	#### PARTE 3
+	ret,rvecs, tvecs = cv.solvePnP(objp, corners2, mtx, dist)
+	print "Computed by: calibrateCamera				solvePnp\n"			
+	print "Ret:\n", Camera['Ret'], ret
+	print "Radial Distortion:\n", Camera['Radial Distortion'], rvecs
+	print "Tangencial Distortion:\n", Camera['Tangencial Distortion'], tvecs
 
 def obj_parameters():
 	objp = np.zeros((8*6,3), np.float32)
@@ -121,36 +115,22 @@ def errors(objpoints,imgpoints,Camera):
 		mean_error += error
 		print( "total error: {}".format(mean_error/len(objpoints)) )
 
-def save_xml(status, mtx,distortion,radial_distortion,tangencial_distortion,mtx_optimized,roi,i):
-	#camera_matrix_xml = E.CameraMatrix(*map(triada, mtx))
-	Status = E.Status(str(status))
-	Original_Matrix = E.Original_Matrix(*map(E.Coef, map(str, mtx)))
-	Optimized_Matrix = E.Optimized_Matrix(*map(E.Coef, map(str, mtx_optimized)))
-	Distortion = E.Distortion(*map(E.Coef, map(str, distortion)))
-	Radial_Distortion = E.Radial_Distortion(*map(E.Coef, map(str, radial_distortion)))
-	Tangencial_Distortion = E.Tangencial_Distortion(*map(E.Coef, map(str, tangencial_distortion)))
-	ROI = E.ROI(*map(E.Coef, map(str, roi)))
-	xmldoc = E.CameraData(Status, Original_Matrix,Optimized_Matrix,Distortion,Radial_Distortion,Tangencial_Distortion,ROI)
-	fname = "parameters{}.xml".format(i)
-	with open(fname, "w") as f:
-		f.write(etree.tostring(xmldoc, pretty_print=True))
-
-def triada(itm):
-	a, b, c = itm
-	return E.Triada(a = str(a), b = str(b), c = str(c))
+def save_xml(ret, mtx,distortion,radial_distortion,tangencial_distortion,mtx_optimized,roi,i):
+	fs_write = cv2.FileStorage("parameters{}.xml".format(i), cv2.FILE_STORAGE_WRITE)
+	fs_write.write("Ret", ret)
+	fs_write.write("Original_Matrix",mtx)
+	fs_write.write("Optimized_Matrix",mtx_optimized)
+	fs_write.write("Distortion",distortion)
+	fs_write.write("Radial_Distortion",np.array(radial_distortion))
+	fs_write.write("Tangencial_Distortion",np.array(tangencial_distortion))	
+	fs_write.write("ROI", roi)
+	fs_write.release()
 
 def load_xml_camera_paremeters():
-	ch = []
-	tree = ET.parse('parameters1.xml')
-	root = tree.getroot()
-	for elem in root:
-		for subelem in elem:
-			print subelem.text
-			ch.append(subelem.text)
-	#np.array(ch).astype(np.float)
-	print ch[0]
-	#Camera = {"Status": ch[0],"Original Matrix" : ch[1], "Distortion" : dist, "Radial Distortion":rvecs, "Tangencial Distortion": tvecs, "Improved Matrix": newcameramtx, "Region of Interest": roi}
-	#return Camera['Region of Interest'], Camera
+	fs_read = cv2.FileStorage('CameraParameters.xml', cv2.FILE_STORAGE_READ)
+	Camera = {"Ret": fs_read.getNode('RET').mat(),"Original Matrix" : fs_read.getNode('Original_Matrix').mat(), "Distortion" :fs_read.getNode('Distortion').mat(), "Radial Distortion":fs_read.getNode('Radial_Distortion').mat(), "Tangencial Distortion":fs_read.getNode('Tangencial_Distortion').mat(), "Improved Matrix": fs_read.getNode('Improved_Matrix').mat(), "Region of Interest": fs_read.getNode('ROI').mat()}
+	fs_read.release()
+	return Camera['Original Matrix'], Camera
 
 def obj_measurement(Camera):
 	global pic
@@ -186,8 +166,35 @@ def obj_measurement(Camera):
 	video.release()
 	cv2.destroyAllWindows()
 
-def data_analysis(data):
+def mean(c1,c2,c3,c4,c5):
+	ret_mean = (np.array(c1['Ret'])+np.array(c2['Ret'])+np.array(c3['Ret'])+np.array(c4['Ret'])+np.array(c5['Ret']))/5
+	mtx_mean = (np.array(c1['Original Matrix'])+np.array(c2['Original Matrix'])+np.array(c3['Original Matrix'])+np.array(c4['Original Matrix'])+np.array(c5['Original Matrix']))/5
+	optimized_mtx_mean = (np.array(c1['Improved Matrix'])+np.array(c2['Improved Matrix'])+np.array(c3['Improved Matrix'])+np.array(c4['Improved Matrix'])+np.array(c5['Improved Matrix']))/5
+	distortion_mean = (np.array(c1['Distortion'])+np.array(c2['Distortion'])+np.array(c3['Distortion'])+np.array(c4['Distortion'])+np.array(c5['Distortion']))/5
+	tangencial_distortion_mean = (np.array(c1['Tangencial Distortion'])+np.array(c2['Tangencial Distortion'])+np.array(c3['Tangencial Distortion'])+np.array(c4['Tangencial Distortion'])+np.array(c5['Tangencial Distortion']))/5
+	radial_distortion_mean = (np.array(c1['Radial Distortion'])+np.array(c2['Radial Distortion'])+np.array(c3['Radial Distortion'])+np.array(c4['Radial Distortion'])+np.array(c5['Radial Distortion']))/5
+	roi_mean = (np.array(c1['Region of Interest'])+np.array(c2['Region of Interest'])+np.array(c3['Region of Interest'])+np.array(c4['Region of Interest'])+np.array(c5['Region of Interest']))/5
+	
+	fs_write = cv2.FileStorage("CameraParameters.xml", cv2.FILE_STORAGE_WRITE)
+	fs_write.write("Ret", ret_mean)
+	fs_write.write("Original_Matrix",mtx_mean)
+	fs_write.write("Optimized_Matrix",optimized_mtx_mean)
+	fs_write.write("Distortion",distortion_mean)
+	fs_write.write("Radial_Distortion",radial_distortion_mean)
+	fs_write.write("Tangencial_Distortion",tangencial_distortion_mean)	
+	fs_write.write("ROI", roi_mean)
+	fs_write.release()
+
+def SD():
 	pass
+def data_analysis(data):
+	C1 = data[-1]
+	C2 = data[-2]
+	C3 = data[-3]
+	C4 = data[-4]
+	C5 = data[-5]
+	mean(C1,C2,C3,C4,C5)
+	#SD()
 def main():
 	draw_line()
 	key = raw_input("\nPress 'C' or 'c' if you want to calibrate the camera: \nOtherwise the camera parameters will be loaded.\n\n")
