@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<Ret>2.6154632259561271e+01</Ret>
+<Original_Matrix type_id="opencv-matrix">
+  <rows>3</rows>
+  <cols>3</cols>
+  <dt>d</dt>
+  <data>
+    1. 0. -3.3335293545850033e-27 0. 1. -1.5021974110977010e-27 0. 0. 1.</data></Original_Matrix>
+<Optimized_Matrix type_id="opencv-matrix">
+  <rows>3</rows>
+  <cols>3</cols>
+  <dt>d</dt>
+  <data>
+    1.0125724077224731e+00 0. -3.3754398456348991e-27 0.
+    1.0020394325256348e+00 -1.5052610609378182e-27 0. 0. 1.</data></Optimized_Matrix>
+<Distortion type_id="opencv-matrix">
+  <rows>1</rows>
+  <cols>5</cols>
+  <dt>d</dt>
+  <data>
+    -1.4031311702816842e-19 -1.5310376459525060e-14
+    -4.8089945775604668e-22 -1.2091475138884548e-21
+    2.3551930257933536e-19</data></Distortion>
+</opencv_storage>

@@ -22,23 +22,4 @@
     -6.1384534742263670e-18 -6.8792568593953600e-13
     -2.6283277082381265e-20 -4.3641399502925267e-20
     2.4219768806372457e-18</data></Distortion>
-<Rotation_Distortion type_id="opencv-matrix">
-  <rows>3</rows>
-  <cols>1</cols>
-  <dt>d</dt>
-  <data>
-    -2.0967704408516191e-03 -2.3242010040361101e-03
-    6.2513149782012378e-01</data></Rotation_Distortion>
-<Translation_Distortion type_id="opencv-matrix">
-  <rows>3</rows>
-  <cols>1</cols>
-  <dt>d</dt>
-  <data>
-    9.9951323059055799e+00 1.9722883453491797e+00 3.6715718595912578e-02</data></Translation_Distortion>
-<ROI type_id="opencv-matrix">
-  <rows>4</rows>
-  <cols>1</cols>
-  <dt>d</dt>
-  <data>
-    0. 0. 518. 373.</data></ROI>
 </opencv_storage>
