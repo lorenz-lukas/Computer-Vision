@@ -35,23 +35,15 @@ display('OBS: rloss -> missclassification fraction')
 display('kloss ->  average loss of each cross-validation model when predicting on new data.')
 
 %%%% Baysian classifier:
-nbGau = fitcnb(meas(:,1:2), species);
-nbGauResubErr = resubLoss(nbGau)
-labels = predict(nbGau, [x y]); 
-
-%melhorando
-nbKD = fitcnb(meas(:,1:2), species, 'DistributionNames','kernel', 'Kernel','box');
-nbKDResubErr = resubLoss(nbKD)
-labels = predict(nbKD, [x y]);
+ 
+ 
+ 
 %%%% LDA
 lda = fitcdiscr(X_training,Y_training);
 ldaClass = resubPredict(lda);
 ldaResubErr = resubLoss(lda)
 [ldaResubCM,grpOrder] = confusionmat(species,ldaClass)
 
-%%%% QDA
-qda = fitcdiscr(meas(:,1:2),species,'DiscrimType','quadratic');
-qdaResubErr = resubLoss(qda)
 %%% Open a new image to test the classifiers
 photo = input('PHOTOs NAME:')
 img = imread(photo);

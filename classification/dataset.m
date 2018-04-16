@@ -5,11 +5,12 @@
 %%  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 img = imread('photo-9-orig.jpg');
-img = imresize(img,6);
+img = imresize(img,6)
+%a = img(50,50)
 figure, imshow(img)
 for i = 1:100 
     [x,y] = ginput(1);
-    px = img(int16(x),int16(y));
+    px = img(int16(y),int16(x));
     label = input('Set the pixel label according to:\n1.Green leaves; 2. Ground;\n3. Yellow and red leaves and fruits; 4. Shadows or unknown.\n')
     data(1,i) = px;
     data(2,i) = label;
