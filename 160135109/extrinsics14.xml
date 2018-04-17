@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<Rotation_Distortion type_id="opencv-matrix">
+  <rows>3</rows>
+  <cols>1</cols>
+  <dt>d</dt>
+  <data>
+    -2.3602470070490694e-03 -2.7825650604037977e-03
+    6.9037482994328792e-01</data></Rotation_Distortion>
+<Translation_Distortion type_id="opencv-matrix">
+  <rows>3</rows>
+  <cols>1</cols>
+  <dt>d</dt>
+  <data>
+    1.9619663863356692e+01 9.4608306705047678e+00 6.8841812304230490e-02</data></Translation_Distortion>
+<ROI type_id="opencv-matrix">
+  <rows>4</rows>
+  <cols>1</cols>
+  <dt>d</dt>
+  <data>
+    0. 0. 560. 403.</data></ROI>
+</opencv_storage>

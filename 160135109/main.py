@@ -4,7 +4,6 @@ import numpy as np
 import cv2
 import math
 import sys
-import sys, traceback
 from scipy.spatial import distance
 video = cv2.VideoCapture(-1)
 (ret, pic) = video.read()
@@ -48,6 +47,7 @@ def px_distance(distance, picture):
 		click_und = 0
 		distance = np.sqrt((px_und[-1][-1] - px_und[-2][-1])**2 + ((px_und[-1][-2]-px_und[-2][-2])**2)) # sqrt(dy²+dx²)
 		real_distance = np.sqrt((x_undistort_real[-1] - x_undistort_real[-2])**2 + (y_undistort_real[-1] - y_undistort_real[-2])**2)
+		real_distance = real_distance*20/10**16
 		print "\nPixel distance in undistort:", distance, "\n"
 		print "\nReal distance in undistort:", real_distance, "\n"
 		distance = 0
@@ -86,7 +86,7 @@ def calibration(j,i): #repeat 5 times, 93mm. 160
 	video = cv2.VideoCapture(0)
 	cv2.namedWindow('Raw')
 	cv2.setMouseCallback('Raw',coordinates)
-	while(num_img < 20):
+	while(num_img < 10):
 		(ret, img) = video.read()
 		pic = cv2.flip(img,1)
 		gray = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)
@@ -106,6 +106,8 @@ def calibration(j,i): #repeat 5 times, 93mm. 160
 	if(num_img > 0):
 		print "Wait a second..."
 		ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None, flags=cv2.CALIB_USE_INTRINSIC_GUESS)
+		# rvecs = 3X1, tvecs = 3X1
+		fovx, fovy, focalLength, principalPoint, aspectRatio = cv2.calibrationMatrixValues(cameraMatrix, gray.shape[::-1], 1.0, 1.0)
 		# mtx = K matrix (Intrinsic Parameters), rvecs = R and tvecs = t (External Parameters)
 		h, w = img.shape[:2]
 		newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
@@ -134,6 +136,7 @@ def Intrinsics(Camera,objp,corners2,mtx,dist):
 	#print "Tangencial Distortion:\n", tvecsRansac
 	Camera['Translation Distortion'] = tvecs
 	return tvecs, rvecs
+
 def obj_parameters():
 	objp = np.zeros((8*6,3), np.float32)
 	objp[:,:2] = np.mgrid[0:6,0:8].T.reshape(-1,2)
@@ -175,7 +178,7 @@ def save_xml(ret, mtx,distortion,rotational_distortion,translation_distortion,mt
 	fs_write.release()
 
 def load_xml_camera_paremeters():
-	index = raw_input("\nChoose 0, 1 or 2 for the camera parameters at distance 0,1 or 2.\n")
+	index = int(raw_input("\nChoose 0, 1 or 2 for the camera parameters at distance 0,1 or 2.\n"))
 	if( index < 3):
 		fs_read = cv2.FileStorage('CameraParameters{}.xml'.format(index), cv2.FILE_STORAGE_READ)
 		Camera = {"Ret": fs_read.getNode('RET').mat(),"Original Matrix" : fs_read.getNode('Original_Matrix').mat(), "Distortion" :fs_read.getNode('Distortion').mat(), "Rotational Distortion":fs_read.getNode('Rotational_Distortion').mat(), "Translation Distortion":fs_read.getNode('Translation_Distortion').mat(),"Improved Matrix": fs_read.getNode('Improved_Matrix').mat(), "Region of Interest": fs_read.getNode('ROI').mat()}
@@ -199,8 +202,10 @@ def projectpoints_undistort(dis,x_img,y_img):
 	factor = 1 + dis[0][0]*r**2+dis[0][1]*r**4+dis[0][4]*r**6
 	x_undistort_real.append(factor*x_img + 2*dis[0][2]*x_img*y_img + dis[0][3]*(r**2+2*x_img**2))
 	y_undistort_real.append(factor*y_img + 2*dis[0][3]*x_img*y_img + dis[0][2]*(r**2+ 2*y_img**2))
+	print x_undistort_real[-1]
+	print y_undistort_real[-1]
 
-def projectpoints_raw(Camera,x_img,y_img):
+def projectpoints_raw(Camera,x_img,y_img,map):
 	global x_raw_real,y_raw_real
 
 def obj_measurement(Camera): # Reference object dimensions: height = 215mm, windth = 88mm
@@ -230,15 +235,14 @@ def obj_measurement(Camera): # Reference object dimensions: height = 215mm, wind
 			corners2 = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
 			cv2.drawChessboardCorners(img, (8,6), corners2, ret)
 			# project 3D points to image plane
-			imgpts, jac = cv2.projectPoints(axis, np.array(Camera['Rotational Distortion']), np.array(Camera['Translation Distortion']), np.array(Camera['Original Matrix']), np.array(Camera['Distortion']))
+			#imgpts, jac = cv2.projectPoints(axis, np.array(Camera['Rotational Distortion']), np.array(Camera['Translation Distortion']), np.array(Camera['Original Matrix']), np.array(Camera['Distortion']))
 		dst = cv2.undistort(img, Camera['Original Matrix'], Camera['Distortion'], None, Camera['Improved Matrix'])
 		if(click_und != 0):
 			projectpoints_undistort(Camera['Distortion'],px_und[-1][-2],px_und[-1][-1])
 			distance_undistort = px_distance(distance_undistort, dst)
 		if(click != 0):
 			projectpoints_raw(Camera,px[-1][-2],px[-1][-1])
-			distance_raw = px_distance(distance_raw, pic)
-		#measure(distance_raw,distance_undistort)
+			distance_raw = px_distance(distance_raw, pic,Camera['Corners'])
 		cv2.imshow('Undistort', dst)
 		cv2.imshow('Raw',pic)
 		key = cv2.waitKey(20)
@@ -280,15 +284,14 @@ def main():
 	if(key == 'C' or key == 'c'):
 		data = []
 		for j in xrange(3):
-			print 'Position the ckey = raw_input("\nPress 'C' or 'c' if you want to calibrate the camera: \nOtherwise the camera parameters will be loaded.\n\n")
-indexbration referencChoose 0, 1 or 2 for the camera parameters at distance 0,1 or 2.liat
-if( index < 3):io	n(j,i)
-				d	ata.append(Camera)
-			data_	analysis(data,j)
+			print 'Position the calibration reference in 3 seconds:\n'
+			for i in xrange(5):
+				print('Click on the image Box. \n')
+				(img,Camera) = calibration(j,i)
+				data.append(Camera)
+			data_analysis(data,j)
 	else:
-		(img,Camera) = load_xml_camera_pareme
-	else:
-		printters()
+		(img,Camera) = load_xml_camera_paremeters()
 	obj_measurement(Camera)
 	video.release()
 
