@@ -1,0 +1,18 @@
+A atuação dos motores dc (provavelmente os usados nas rodas) será dada
+para correção de trajetória conforme os dados dos sensores. Estes podem
+consistir em apenas LDRs (light diode resistor), utilizando-se da das
+características da linha ou sensores óticos reflexivo (como o Fototransistor
+TCRT5000 - http://blog.fazedores.com/sensor-optico-reflexivo-tcrt5000-com-arduino/).
+Para uma implementação mais robusta, pode-se utilizar tbm câmeras
+,que, com o auxílio do framework OPENCV - ROS, consegue-se localizar as linhas e a
+ângulação delas nas imagens. Assim, o acionamento do motor direito ou esquerdo
+seria conforme a orientação do carrinho com relação a linha, de forma a aumentar
+a rotação de um deles para a correção de trajetória (conforme explicitado no
+tutorial https://www.filipeflop.com/blog/projeto-robo-seguidor-de-linha-arduino/,
+por exemplo).
+
+Logo, existem várias formas de se regular a tensão nos motores das rodas. Contudo,
+valhe salientar o método derivativo, onde a rotação aplicada ao motor é proporcinal
+a derivada do ângulo entre o eixo do carrinho e a linha, de forma que o ajuste fino
+de trajetória se dá ao fechar a malha com os sensores de atuação, como os mencionados
+anteriormente.
