@@ -1,44 +1,44 @@
 <?xml version="1.0"?>
 <opencv_storage>
-<Ret>1.1104059016134049e+02</Ret>
+<Ret>1.5859122634370974e+02</Ret>
 <Original_Matrix type_id="opencv-matrix">
   <rows>3</rows>
   <cols>3</cols>
   <dt>d</dt>
   <data>
-    1. 0. -2.6454358230786308e-26 0. 1. -1.7369694976288551e-26 0. 0. 1.</data></Original_Matrix>
+    1. 0. -1.0689345067300928e-25 0. 1. -6.3655822361516235e-26 0. 0. 1.</data></Original_Matrix>
 <Optimized_Matrix type_id="opencv-matrix">
   <rows>3</rows>
   <cols>3</cols>
   <dt>d</dt>
   <data>
-    1.0144044160842896e+00 0. -2.6835417591996177e-26 0.
-    9.9856102466583252e-01 -1.7344701056165397e-26 0. 0. 1.</data></Optimized_Matrix>
+    1.0352510213851929e+00 0. -1.1066155396321659e-25 0.
+    9.9332720041275024e-01 -6.3231061638514595e-26 0. 0. 1.</data></Optimized_Matrix>
 <Distortion type_id="opencv-matrix">
   <rows>1</rows>
   <cols>5</cols>
   <dt>d</dt>
   <data>
-    -1.6762650098087037e-18 -1.9003656653252919e-13
-    -7.3601483228935611e-21 -1.1636472715635875e-20
-    7.0579581107270916e-19</data></Distortion>
+    -6.1384534742263670e-18 -6.8792568593953600e-13
+    -2.6283277082381265e-20 -4.3641399502925267e-20
+    2.4219768806372457e-18</data></Distortion>
 <Rotation_Distortion type_id="opencv-matrix">
   <rows>3</rows>
   <cols>1</cols>
   <dt>d</dt>
   <data>
-    -2.2728990616460516e-03 -2.4874181528993624e-03
-    6.9958085282798244e-01</data></Rotation_Distortion>
+    -2.0967704408516191e-03 -2.3242010040361101e-03
+    6.2513149782012378e-01</data></Rotation_Distortion>
 <Translation_Distortion type_id="opencv-matrix">
   <rows>3</rows>
   <cols>1</cols>
   <dt>d</dt>
   <data>
-    1.5734824387590770e+01 7.4865351457851093e+00 5.2880291477310985e-02</data></Translation_Distortion>
+    9.9951323059055799e+00 1.9722883453491797e+00 3.6715718595912578e-02</data></Translation_Distortion>
 <ROI type_id="opencv-matrix">
   <rows>4</rows>
   <cols>1</cols>
   <dt>d</dt>
   <data>
-    0. 0. 608. 449.</data></ROI>
+    0. 0. 518. 373.</data></ROI>
 </opencv_storage>

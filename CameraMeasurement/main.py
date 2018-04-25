@@ -4,6 +4,8 @@ import numpy as np
 import cv2
 import math
 import sys
+import sys, traceback
+from scipy.spatial import distance
 video = cv2.VideoCapture(-1)
 (ret, pic) = video.read()
 np.seterr(over='ignore')
@@ -11,7 +13,10 @@ px = []
 px_und = []
 click_und = 0
 click = 0
-undistort = 0
+x_raw_real = [0,0]
+y_raw_real = [0,0]
+x_undistort_real = [0,0]
+y_undistort_real = [0,0]
 def f(x):
 	pass
 def coordinates(event,x,y,flags,param):
@@ -20,35 +25,34 @@ def coordinates(event,x,y,flags,param):
 		px.append((x,y))
 		print('Press ESC to exit!\n')
 		print 'Coordinates:',(x,y)
-		print 'BGR:',px[-1]
 		print('Selecione mais um ponto')
 		click = click + 1
 def coordinates_undistort(event,x,y,flags,param):
 		global px_und, click_und, undistort
 		if(event == cv2.EVENT_LBUTTONDBLCLK):
-			undistort = 1
 			px_und.append((x,y))
 			print('Press ESC to exit!\n')
 			print 'Coordinates in Undistort image:',(x,y)
-			print 'BGR:',px_und[-1]
 			print('Selecione mais um ponto')
 			click_und = click_und + 1
 
 def px_distance(distance, picture):
 	global click,click_und, undistort
 	if(click==2):
-		undistort = 0
 		click = 0
-		distance = np.sqrt((px[-1][-1]-px[-2][-1])**2 + ((px[-1][-2]-px[-2][-2])**2)) # sqrt(dy²+dx²)
+		distance = np.sqrt((px[-1][-1] - px[-2][-1])**2 + ((px[-1][-2] - px[-2][-2])**2)) # sqrt(dy²+dx²)
+		real_distance = np.sqrt((x_raw_real[-1] - x_raw_real[-2])**2 + (y_raw_real[-1] - y_raw_real[-2])**2)
 		print "\nPixel distance in raw:", distance, "\n"
+		print "\nReal distance:", real_distance, "\n"
 	if(click_und == 2):
-		undistort = 1
 		click_und = 0
-		distance = np.sqrt((px_und[-1][-1]-px_und[-2][-1])**2 + ((px_und[-1][-2]-px_und[-2][-2])**2)) # sqrt(dy²+dx²)
+		distance = np.sqrt((px_und[-1][-1] - px_und[-2][-1])**2 + ((px_und[-1][-2]-px_und[-2][-2])**2)) # sqrt(dy²+dx²)
+		real_distance = np.sqrt((x_undistort_real[-1] - x_undistort_real[-2])**2 + (y_undistort_real[-1] - y_undistort_real[-2])**2)
 		print "\nPixel distance in undistort:", distance, "\n"
+		print "\nReal distance in undistort:", real_distance, "\n"
+		distance = 0
 	if(distance!=0 and click == 0):
 		cv2.line(picture,(px[-1][-2],px[-1][-1]),(px[-2][-2],px[-2][-1]),(0,0,255),5)
-
 	return distance
 
 def draw_line():
@@ -71,7 +75,7 @@ def draw_line():
 	video.release()
 	cv2.destroyAllWindows()
 
-def calibration(i): #repeat 5 times
+def calibration(j,i): #repeat 5 times, 93mm. 160
 	global pic, ret, video
 	num_img = 0
 	key = 0
@@ -96,6 +100,7 @@ def calibration(i): #repeat 5 times
 			cv2.drawChessboardCorners(pic, (8,6), corners2, ret)
 		cv2.imshow('Raw', pic)
 		key = cv2.waitKey(20)
+	cv2.waitKey(500)
 	video.release()
 	cv2.destroyAllWindows()
 	if(num_img > 0):
@@ -107,7 +112,7 @@ def calibration(i): #repeat 5 times
 		## Python dictionary data structure:
 		Camera = {"Ret": ret,"Original Matrix" : mtx, "Distortion" : dist, "Rotational Distortion":rvecs, "Translation Distortion": tvecs, "Improved Matrix": newcameramtx, "Region of Interest": roi}
 		tvecs,rvecs = Intrinsics(Camera,objp,corners2,Camera['Original Matrix'],Camera['Distortion'])
-		save_xml(ret,mtx,dist,rvecs,tvecs,newcameramtx,roi,i)
+		save_xml(ret,mtx,dist,rvecs,tvecs,newcameramtx,roi,j,i)
 		#errors(objpoints,imgpoints,Camera)
 		return img, Camera
 
@@ -146,8 +151,9 @@ def errors(objpoints,imgpoints,Camera):
 		mean_error += error
 		print( "total error: {}".format(mean_error/len(objpoints)) )
 
-def save_xml(ret, mtx,distortion,rotational_distortion,translation_distortion,mtx_optimized,roi,i):
-	fs_write = cv2.FileStorage("parameters{}.xml".format(i), cv2.FILE_STORAGE_WRITE)
+def save_xml(ret, mtx,distortion,rotational_distortion,translation_distortion,mtx_optimized,roi,j,i):
+	index = j*10+i
+	fs_write = cv2.FileStorage("parameters{}.xml".format(index), cv2.FILE_STORAGE_WRITE)
 	fs_write.write("Ret", ret)
 	fs_write.write("Original_Matrix",mtx)
 	fs_write.write("Optimized_Matrix",mtx_optimized)
@@ -156,21 +162,49 @@ def save_xml(ret, mtx,distortion,rotational_distortion,translation_distortion,mt
 	fs_write.write("Translation_Distortion",np.array(translation_distortion))
 	fs_write.write("ROI", roi)
 	fs_write.release()
+	fs_write = cv2.FileStorage("intrinsics{}.xml".format(index), cv2.FILE_STORAGE_WRITE)
+	fs_write.write("Ret", ret)
+	fs_write.write("Original_Matrix",mtx)
+	fs_write.write("Optimized_Matrix",mtx_optimized)
+	fs_write.write("Distortion",distortion)
+	fs_write.release()
+	fs_write = cv2.FileStorage("extrinsics{}.xml".format(index), cv2.FILE_STORAGE_WRITE)
+	fs_write.write("Rotation_Distortion",np.array(rotational_distortion))
+	fs_write.write("Translation_Distortion",np.array(translation_distortion))
+	fs_write.write("ROI", roi)
+	fs_write.release()
 
 def load_xml_camera_paremeters():
-	fs_read = cv2.FileStorage('CameraParameters.xml', cv2.FILE_STORAGE_READ)
-	Camera = {"Ret": fs_read.getNode('RET').mat(),"Original Matrix" : fs_read.getNode('Original_Matrix').mat(), "Distortion" :fs_read.getNode('Distortion').mat(), "Rotational Distortion":fs_read.getNode('Rotational_Distortion').mat(), "Translation Distortion":fs_read.getNode('Translation_Distortion').mat(),"Improved Matrix": fs_read.getNode('Improved_Matrix').mat(), "Region of Interest": fs_read.getNode('ROI').mat()}
-	fs_read.release()
-	return Camera['Original Matrix'], Camera
+	index = raw_input("\nChoose 0, 1 or 2 for the camera parameters at distance 0,1 or 2.\n")
+	if( index < 3):
+		fs_read = cv2.FileStorage('CameraParameters{}.xml'.format(index), cv2.FILE_STORAGE_READ)
+		Camera = {"Ret": fs_read.getNode('RET').mat(),"Original Matrix" : fs_read.getNode('Original_Matrix').mat(), "Distortion" :fs_read.getNode('Distortion').mat(), "Rotational Distortion":fs_read.getNode('Rotational_Distortion').mat(), "Translation Distortion":fs_read.getNode('Translation_Distortion').mat(),"Improved Matrix": fs_read.getNode('Improved_Matrix').mat(), "Region of Interest": fs_read.getNode('ROI').mat()}
+		fs_read.release()
+		return Camera['Original Matrix'], Camera
+	else:
+		print 'Error. invalid index\n'
+		sys.exit(0)
 def measure(distance_raw,distance_undistort):
 	global undistort
 	if(undistort):
 		pass
 	else:
 		pass
-	
-def obj_measurement(Camera):
-	global pic
+#def distance_to_camera(knownWidth, focalLength, perWidth):
+	# compute and return the distance from the maker to the camera
+#	return (knownWidth * focalLength) / perWidth
+def projectpoints_undistort(dis,x_img,y_img):
+	global x_undistort_real, y_undistort_real
+	r = x_img**2+y_img**2
+	factor = 1 + dis[0][0]*r**2+dis[0][1]*r**4+dis[0][4]*r**6
+	x_undistort_real.append(factor*x_img + 2*dis[0][2]*x_img*y_img + dis[0][3]*(r**2+2*x_img**2))
+	y_undistort_real.append(factor*y_img + 2*dis[0][3]*x_img*y_img + dis[0][2]*(r**2+ 2*y_img**2))
+
+def projectpoints_raw(Camera,x_img,y_img):
+	global x_raw_real,y_raw_real
+
+def obj_measurement(Camera): # Reference object dimensions: height = 215mm, windth = 88mm
+	global pic,px,px_und, click, click_und
 	square_lenght = 27.7 # In mm
 	key = 0
 	flag = 1
@@ -198,16 +232,20 @@ def obj_measurement(Camera):
 			# project 3D points to image plane
 			imgpts, jac = cv2.projectPoints(axis, np.array(Camera['Rotational Distortion']), np.array(Camera['Translation Distortion']), np.array(Camera['Original Matrix']), np.array(Camera['Distortion']))
 		dst = cv2.undistort(img, Camera['Original Matrix'], Camera['Distortion'], None, Camera['Improved Matrix'])
-		distance_raw = px_distance(distance_raw, pic)
-		distance_undistort = px_distance(distance_undistort, dst)
-		measure(distance_raw,distance_undistort)
+		if(click_und != 0):
+			projectpoints_undistort(Camera['Distortion'],px_und[-1][-2],px_und[-1][-1])
+			distance_undistort = px_distance(distance_undistort, dst)
+		if(click != 0):
+			projectpoints_raw(Camera,px[-1][-2],px[-1][-1])
+			distance_raw = px_distance(distance_raw, pic)
+		#measure(distance_raw,distance_undistort)
 		cv2.imshow('Undistort', dst)
 		cv2.imshow('Raw',pic)
 		key = cv2.waitKey(20)
 	video.release()
 	cv2.destroyAllWindows()
 
-def mean(c1,c2,c3,c4,c5):
+def mean(c1,c2,c3,c4,c5,j):
 	ret_mean = (np.array(c1['Ret'])+np.array(c2['Ret'])+np.array(c3['Ret'])+np.array(c4['Ret'])+np.array(c5['Ret']))/5
 	mtx_mean = (np.array(c1['Original Matrix'])+np.array(c2['Original Matrix'])+np.array(c3['Original Matrix'])+np.array(c4['Original Matrix'])+np.array(c5['Original Matrix']))/5
 	optimized_mtx_mean = (np.array(c1['Improved Matrix'])+np.array(c2['Improved Matrix'])+np.array(c3['Improved Matrix'])+np.array(c4['Improved Matrix'])+np.array(c5['Improved Matrix']))/5
@@ -216,7 +254,7 @@ def mean(c1,c2,c3,c4,c5):
 	rotational_distortion_mean = (np.array(c1['Rotational Distortion'])+np.array(c2['Rotational Distortion'])+np.array(c3['Rotational Distortion'])+np.array(c4['Rotational Distortion'])+np.array(c5['Rotational Distortion']))/5
 	roi_mean = (np.array(c1['Region of Interest'])+np.array(c2['Region of Interest'])+np.array(c3['Region of Interest'])+np.array(c4['Region of Interest'])+np.array(c5['Region of Interest']))/5
 
-	fs_write = cv2.FileStorage("CameraParameters.xml", cv2.FILE_STORAGE_WRITE)
+	fs_write = cv2.FileStorage("CameraParameters{}.xml".format(j), cv2.FILE_STORAGE_WRITE)
 	fs_write.write("Ret", ret_mean)
 	fs_write.write("Original_Matrix",mtx_mean)
 	fs_write.write("Optimized_Matrix",optimized_mtx_mean)
@@ -226,28 +264,31 @@ def mean(c1,c2,c3,c4,c5):
 	fs_write.write("ROI", roi_mean)
 	fs_write.release()
 
-def SD():
+def SD(C1,C2,C3,C4,C5,j):
 	pass
-def data_analysis(data):
+def data_analysis(data,j):
 	C1 = data[-1]
 	C2 = data[-2]
 	C3 = data[-3]
 	C4 = data[-4]
 	C5 = data[-5]
-	mean(C1,C2,C3,C4,C5)
-	#SD()
+	mean(C1,C2,C3,C4,C5,j)
+	#SD(C1,C2,C3,C4,C5,j)
 def main():
 	draw_line()
 	key = raw_input("\nPress 'C' or 'c' if you want to calibrate the camera: \nOtherwise the camera parameters will be loaded.\n\n")
 	if(key == 'C' or key == 'c'):
 		data = []
-		for i in xrange(5):
-			print('Click on the image Box. \n')
-			(img,Camera) = calibration(i)
-			data.append(Camera)
-		data_analysis(data)
+		for j in xrange(3):
+			print 'Position the ckey = raw_input("\nPress 'C' or 'c' if you want to calibrate the camera: \nOtherwise the camera parameters will be loaded.\n\n")
+indexbration referencChoose 0, 1 or 2 for the camera parameters at distance 0,1 or 2.liat
+if( index < 3):io	n(j,i)
+				d	ata.append(Camera)
+			data_	analysis(data,j)
 	else:
-		(img,Camera) = load_xml_camera_paremeters()
+		(img,Camera) = load_xml_camera_pareme
+	else:
+		printters()
 	obj_measurement(Camera)
 	video.release()
 
