@@ -37,7 +37,7 @@ def epipolar(imgL,imgR):
 	pts1 = []
 	pts2 = []
 	for i,(m,n) in enumerate(matches):
-		if m.distance < 0.8*n.distance:
+		if m.distance < 0.17*n.distance: # Number of epilines.
 			good.append(m)
 			pts2.append(kp2[m.trainIdx].pt)
 			pts1.append(kp1[m.queryIdx].pt)
@@ -91,9 +91,9 @@ def distance_3d(f,b):#f = 25 mm b = 120 mm
     return X,Y,Z
 
 def stereo_cameras():
-    pass
-def F_matrix():
-    pass
+
+	pass
+
 
 def object_measuremnt_3D():
     cv2.setMouseCallback('Raw',coordinates)
