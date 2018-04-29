@@ -91,9 +91,53 @@ def distance_3d(f,b):#f = 25 mm b = 120 mm
     return X,Y,Z
 
 def stereo_cameras():
+	key = input("Would you like to load images (press l) or take pictures (press any other)?")
+	if(key != 'l' or key !='L'):
+		print("Press 'q' to quit and 'r' to record.")
+		num = 0
+		while(num < 2):
+			cv2.namedWindow('Press r to record! First the left and then the right image.')
+			video = cv2.VideoCapture(-1)
+			(ret, pic) = video.read()
+			h, w = pic.shape[:2]
+			if(key = 'r'):
+				if(num == 0):
+					cv2.imwrite('left.jpg',pic)
+					imgL = pic
+					num++
+				else
+					h, w = pic.shape[:2]
+					cv2.imwrite('right.jpg',pic)
+					imgR = pic
+	else
+		imgL = cv2.imread('left.jpg')
+		imgR = cv2.imread('right.jpg')
+	cv2.destroyAllWindows()
+	video.release()
+	newcameramtx, roi = cv2.getOptimalNewCameraMatrix(intrinsics, distortion, (w, h), 1, (w, h))
+    mapx, mapy = cv2.initUndistortRectifyMap(intrinsics, distortion, None, newcameramtx, (w, h), 5)
+	imgL_undistort = cv2.remap(imgL, mapx, mapy, cv2.INTER_LINEAR)
+	imgR_undistort = cv2.remap(imgR, mapx, mapy, cv2.INTER_LINEAR)
+	epipolar(imgL_undistort,imgR_undistort)
+    stereo_map(imgL_undistort,imgR_undistort)
 
-	pass
+def load_xml():
+	fs = cv2.FileStorage('rotation.xml', cv2.FILE_STORAGE_READ)
+    r = fs.getNode('floatdata').mat()
+    fs.release()
 
+	fs = cv2.FileStorage('translation.xml', cv2.FILE_STORAGE_READ)
+    t = fs.getNode('floatdata').mat()
+    fs.release()
+
+	fs = cv2.FileStorage('intrinsics.xml', cv2.FILE_STORAGE_READ)
+    intrinsics = fs.getNode('floatdata').mat()
+    fs.release()
+
+    fs = cv2.FileStorage('distortion.xml', cv2.FILE_STORAGE_READ)
+    distortion = fs.getNode('floatdata').mat()
+    fs.release()
+	return r,t,intrinsics,distortion
 
 def object_measuremnt_3D():
     cv2.setMouseCallback('Raw',coordinates)
@@ -103,11 +147,13 @@ def main():
     imgR = cv.imread('aloeR.png',0) #trainimage # right image
     epipolar(imgL,imgR)
     stereo_map(imgL,imgR)
-    imgL = cv.imread('babyL.png',0)  #queryimage # left image
+
+	imgL = cv.imread('babyL.png',0)  #queryimage # left image
     imgR = cv.imread('babyR.png',0) #trainimage # right image
     epipolar(imgL,imgR)
     stereo_map(imgL,imgR)
 
+	stereo_cameras()
     #X,Y,Z = object_measuremnt_3D()
 
 main()

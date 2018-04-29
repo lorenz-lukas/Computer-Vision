@@ -1,4 +1,10 @@
 #!/usr/bin/python3
+# Requisito1
+# Author: Aloisio Dourado Neto
+# Discipline: Computer Vision/UnB
+# Professor: Teo de Campos
+# Mail: aloisio.dourado.bh@gmail.com
+# Created Time: Sat 17 Mar 2018
 # coding=utf-8
 import sys, os
 import cv2
